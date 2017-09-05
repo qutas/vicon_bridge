@@ -40,6 +40,7 @@
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <vicon_bridge/viconGrabPose.h>
 #include <iostream>
 
@@ -331,7 +332,7 @@ private:
 
     if(publish_tf_)
     {
-      spub.pub = nh.advertise<geometry_msgs::TransformStamped>(tracked_frame_suffix_ + "/" + subject_name + "/"
+      spub.pub = nh.advertise<geometry_msgs::PoseStamped>(tracked_frame_suffix_ + "/" + subject_name + "/"
                                                                                                             + segment_name, 10);
     }
     // try to get zero pose from parameter server
@@ -463,7 +464,7 @@ private:
     SegmentMap::iterator pub_it;
     tf::Transform transform;
     std::vector<tf::StampedTransform, std::allocator<tf::StampedTransform> > transforms;
-    geometry_msgs::TransformStampedPtr pose_msg(new geometry_msgs::TransformStamped);
+    geometry_msgs::PoseStamped pose_msg;
     static unsigned int cnt = 0;
 
     for (unsigned int i_subjects = 0; i_subjects < n_subjects; i_subjects++)
@@ -510,7 +511,18 @@ private:
 
                   if(publish_tf_)
                   {
-                    tf::transformStampedTFToMsg(transforms.back(), *pose_msg);
+                    //tf::transformStampedTFToMsg(transforms.back(), *pose_msg);
+					
+					pose_msg.header.frame_id = transforms.back().frame_id_;
+					pose_msg.header.stamp = transforms.back().stamp_;
+					pose_msg.pose.position.x = transforms.back().getOrigin().x();
+					pose_msg.pose.position.y = transforms.back().getOrigin().y();
+					pose_msg.pose.position.z = transforms.back().getOrigin().z();
+					pose_msg.pose.orientation.w = transforms.back().getRotation().w();
+					pose_msg.pose.orientation.x = transforms.back().getRotation().x();
+					pose_msg.pose.orientation.y = transforms.back().getRotation().y();
+					pose_msg.pose.orientation.z = transforms.back().getRotation().z();
+
                     seg.pub.publish(pose_msg);
                   }
                 }
